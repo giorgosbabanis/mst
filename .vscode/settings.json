@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "time.h": "c",
+        "assert.h": "c",
+        "limits.h": "c"
+    }
+}
