@@ -41,11 +41,18 @@ struct extention* extend(struct vertex* v)
 
 void addEdge(unsigned long id, struct vertex* v)
 {
+    int pos = v->count&15;
     if(v->count<16)
     {
-        
+        v->neigbhors[pos] = id;
     }
-    int pos = v->count&15;
+    else
+    {
+        printf("TOO MANY NEIGHBORS");
+        exit(-1);
+    }
+    return;
+    
     if( v->count&15 == 0)
     {
 
@@ -77,6 +84,7 @@ int main(int argc, char *argv[])
         if(last == '\n')
         {
             edgesCounter++;
+            
         }
     }
     printf("%d\n",edgesCounter);

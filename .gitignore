@@ -1,5 +1,4 @@
-build
-logs
-obj
 data
-
+docs
+obj
+test*
