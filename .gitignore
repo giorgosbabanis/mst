@@ -2,3 +2,4 @@ data
 docs
 obj
 test*
+*.exe
