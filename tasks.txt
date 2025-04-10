@@ -1,0 +1,10 @@
+Current progress
+Able to load unweighted graphs and print nodes using their id
+
+TODO
+Add a second list of each that holds the weight DONE
+Add a graph creator for testing DONE
+Eliminate duplicate edges and get to offset array +  edges array form
+Map the graph from memory to a file
+Retrieve a file created
+Add reading from my memory mappping implementation to the ready mst program

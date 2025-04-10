@@ -377,7 +377,7 @@ struct ll_404_graph* get_ll_404_txt_graph(char* file_name, unsigned int* flags)
 		g->edges_count = edges_count;
 		g->offsets_list = numa_alloc_interleaved(sizeof(unsigned long) * (1 + g->vertices_count));
 		assert(g->offsets_list != NULL);
-		g->edges_list = numa_alloc_interleaved(sizeof(unsigned int) * g->edges_count);
+		g->edges_list = numa_alloc_interleaved(sizeof(unsigned int) * g->edges_count * 2);
 		assert(g->edges_list != NULL);
 		
 	// Reading graph from disk
@@ -461,6 +461,7 @@ struct ll_404_graph* get_ll_404_txt_graph(char* file_name, unsigned int* flags)
 		assert(count >= 0);
 		printf("el_count %d\n", el_count);
 		printf("edges_count %d\n", edges_count);
+		printf("last edge %d\n", g->edges_list[edges_count * 2 - 2]);
 		printf("vl_count %d\n", vl_count);
 		printf("vertices_count %d\n", vertices_count);
 		assert(el_count == edges_count*2);
@@ -476,9 +477,6 @@ struct ll_404_graph* get_ll_404_txt_graph(char* file_name, unsigned int* flags)
 
 		printf("Reading %'.1f (MB) completed in %'.3f (seconds)\n", total_read_bytes/1e6, (get_nano_time() - t1)/1e9); 
 	}
-
-	// Printing the first vals in the read graph
-		print_ll_400_graph((struct ll_400_graph*)g);
 
 	// Flush the OS cache
 		flush_os_cache();

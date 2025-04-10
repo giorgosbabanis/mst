@@ -7,13 +7,13 @@
 #define RESET "\x1B[0m"
 
 const int vertexSize = 16;
-const unsigned long vertexBufferSize = 1024;
+const unsigned int vertexBufferSize = 1024;
 
 typedef struct vertex
 {
-    unsigned long id;
+    unsigned int id;
     int count;
-    unsigned long *neigbhors;
+    unsigned int *neigbhors;
     struct extention *next;
     struct extention *last;
 } vertex;
@@ -22,16 +22,16 @@ typedef struct extention
 {
     int id;
     int count;
-    unsigned long *neigbhors;
+    unsigned int *neigbhors;
     struct extention *next;
 } extention;
 
-void allocateVertex(unsigned long id, vertex *vertex)
+void allocateVertex(unsigned int id, vertex *vertex)
 {
     vertex->count = 0;
     vertex->id = id;
     vertex->next = NULL;
-    vertex->neigbhors = (unsigned long *)malloc(2 * vertexSize * sizeof(unsigned long));
+    vertex->neigbhors = (unsigned int *)malloc(2 * vertexSize * sizeof(unsigned int));
 }
 
 void deallocateVertex(vertex *vertex)
@@ -57,7 +57,7 @@ void extend(vertex *v)
 {
     extention *last = (extention *)malloc(sizeof(extention));
     last->count = 0;
-    last->neigbhors = (unsigned long *)malloc(2 * vertexSize * sizeof(unsigned long));
+    last->neigbhors = (unsigned int *)malloc(2 * vertexSize * sizeof(unsigned int));
     last->next == NULL;
     if (v->next == NULL)
     {
@@ -72,7 +72,7 @@ void extend(vertex *v)
     v->last = last;
 }
 
-void addEdge(unsigned long id, vertex *v, unsigned long weight)
+void addEdge(unsigned int id, vertex *v, unsigned int weight)
 {
     if (v->count < vertexSize)
     {
@@ -99,6 +99,7 @@ void addEdge(unsigned long id, vertex *v, unsigned long weight)
     v->last->neigbhors[2 * v->last->count] = id;
     v->last->neigbhors[2 * v->last->count + 1] = weight;
     v->last->count++;
+  
 }
 
 void printVertex(vertex *v)
@@ -108,19 +109,19 @@ void printVertex(vertex *v)
     {
         count = v->last->id * vertexSize + v->last->count;
     }
-    printf("id: %lu count:%d list:\n", v->id, count);
+    printf("id: %u count:%d list:\n", v->id, count);
     for (int i = 0; i < v->count; i++)
     {
-        printf(GRN "%lu " RESET, v->neigbhors[2 * i]);
-            printf(RED "%lu " RESET, v->neigbhors[2 * i + 1]);
+        printf(GRN "%u " RESET, v->neigbhors[2 * i]);
+            printf(RED "%u " RESET, v->neigbhors[2 * i + 1]);
     }
     extention *next = v->next;
     while (next != NULL)
     {
         for (int i = 0; i < next->count; i++)
         {
-            printf(GRN "%lu " RESET, next->neigbhors[2 * i]);
-            printf(RED "%lu " RESET, next->neigbhors[2 * i + 1]);
+            printf(GRN "%u " RESET, next->neigbhors[2 * i]);
+            printf(RED "%u " RESET, next->neigbhors[2 * i + 1]);
         }
         next = next->next;
     }
@@ -153,7 +154,7 @@ vertexBuffer *extendBuffer(vertexBuffer *buffer)
     // printf("allocated block with id %d\n", res->id);
     for (int i = 0; i < vertexBufferSize; i++)
     {
-        unsigned long id = i + vertexBufferSize * res->id;
+        unsigned int id = i + vertexBufferSize * res->id;
         allocateVertex(id, &res->vertices[i]);
         // printf("allocated %lu with id %lu\n", id, res->vertices[i].id);
     }
@@ -176,9 +177,9 @@ void deallocateVertexBuffer(vertexBuffer *buffer)
     } while (next != NULL);
 }
 
-vertex *getVertex(vertexBuffer *buffer, unsigned long id)
+vertex *getVertex(vertexBuffer *buffer, unsigned int id)
 {
-    unsigned long pos = id & (vertexBufferSize - 1);
+    unsigned int pos = id & (vertexBufferSize - 1);
 
     int bufferId = id / vertexBufferSize;
     vertexBuffer *current = buffer;
@@ -197,7 +198,7 @@ vertex *getVertex(vertexBuffer *buffer, unsigned long id)
     vertex *res = &(current->vertices[pos]);
     if (res->id != id)
     {
-        printf("get vertex id, error given %lu but vertex had %lu\n", id, res->id);
+        printf("get vertex id, error given %u but vertex had %u\n", id, res->id);
         printf("Current block id %d, and target is %d\n", current->id, bufferId);
         exit(-1);
     }
@@ -206,12 +207,12 @@ vertex *getVertex(vertexBuffer *buffer, unsigned long id)
 
 int main(int argc, char *argv[])
 {
-    unsigned long defaultWeight;
+    unsigned int defaultWeight;
 
     if (argc == 3)
     {
         
-        int read = sscanf(argv[2], "%lu", &defaultWeight);
+        int read = sscanf(argv[2], "%u", &defaultWeight);
         if(read == 0)
         {
             defaultWeight = 1;
@@ -226,18 +227,21 @@ int main(int argc, char *argv[])
 
     char *buffer = (char *)calloc(256, sizeof(char));
     FILE *fd = fopen(argv[1], "r");
-
+    if(fd == NULL)
+    {
+        printf("No such file exists");
+        return -1;
+    }
     int counter = 0;
     int edgesCounter = 0;
     char last;
-
     while (last = fgetc(fd))
     {
         if (last == EOF)
         {
             counter = 0;
-            unsigned long v1, v2, w;
-            int numberRead = sscanf(buffer, "%lu %lu", &v1, &v2);
+            unsigned int v1, v2, w;
+            int numberRead = sscanf(buffer, "%u %u", &v1, &v2);
             if (numberRead == 2)
             {
                 w = defaultWeight;
@@ -257,8 +261,8 @@ int main(int argc, char *argv[])
         if (last == '\n')
         {
             counter = 0;
-            unsigned long v1, v2, w;
-            int numberRead = sscanf(buffer, "%lu %lu %lu", &v1, &v2, &w);
+            unsigned int v1, v2, w;
+            int numberRead = sscanf(buffer, "%u %u %u", &v1, &v2, &w);
 
             if (numberRead == 2)
             {
@@ -276,9 +280,9 @@ int main(int argc, char *argv[])
     fclose(fd);
     while (1)
     {
-        unsigned long id;
+        unsigned int id;
         printf("Give an id to print the vertex\n");
-        scanf("%lu", &id);
+        scanf("%u", &id);
         printVertex(getVertex(graph, id));
     }
 }
