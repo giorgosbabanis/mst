@@ -10,3 +10,5 @@ convert: graphTextHandler.c
 
 creator: graphCreator.c
 	$(CC) graphCreator.c -o creator.exe
+reader: graphReader.c
+	$(CC) graphReader.c -o reader.exe

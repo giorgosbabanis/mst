@@ -1,9 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/mman.h>
 
-#define RED   "\x1B[31m"
-#define GRN   "\x1B[32m"
+#define RED "\x1B[31m"
+#define GRN "\x1B[32m"
 #define RESET "\x1B[0m"
 
 const int vertexSize = 16;
@@ -37,20 +40,36 @@ void allocateVertex(unsigned int id, vertex *vertex)
 void deallocateVertex(vertex *vertex)
 {
     extention *next = NULL;
-    extention *current = NULL;
-    if (vertex->next != NULL)
+    extention *current = vertex->next;
+    if (current == NULL)
     {
-        current = vertex->next;
-        free(current);
-        next = current->next;
+        return;
     }
     while (next != NULL)
     {
-        current = next;
         next = current->next;
+        free(current->neigbhors);
         free(current);
+        current = next;
     }
-    free(vertex);
+    free(vertex->neigbhors);
+}
+
+void deallocateExtentions(vertex *vertex)
+{
+    extention *next = NULL;
+    extention *current = vertex->next;
+    if (current == NULL)
+    {
+        return;
+    }
+    while (next != NULL)
+    {
+        next = current->next;
+        free(current->neigbhors);
+        free(current);
+        current = next;
+    }
 }
 
 void extend(vertex *v)
@@ -99,7 +118,7 @@ void addEdge(unsigned int id, vertex *v, unsigned int weight)
     v->last->neigbhors[2 * v->last->count] = id;
     v->last->neigbhors[2 * v->last->count + 1] = weight;
     v->last->count++;
-  
+    //printf("added %u %u %u\n", id, v->id, weight);
 }
 
 void printVertex(vertex *v)
@@ -113,7 +132,7 @@ void printVertex(vertex *v)
     for (int i = 0; i < v->count; i++)
     {
         printf(GRN "%u " RESET, v->neigbhors[2 * i]);
-            printf(RED "%u " RESET, v->neigbhors[2 * i + 1]);
+        printf(RED "%u " RESET, v->neigbhors[2 * i + 1]);
     }
     extention *next = v->next;
     while (next != NULL)
@@ -205,15 +224,156 @@ vertex *getVertex(vertexBuffer *buffer, unsigned int id)
     return res;
 }
 
+void convertVertex(vertex *v)
+{
+    int count = v->count;
+    if (v->last != NULL)
+    {
+        count = v->last->id * vertexSize + v->last->count;
+    }
+
+    unsigned int *buffer = (unsigned int *)malloc(sizeof(unsigned int) * count * 2);
+    int counter = 0;
+    memcpy(buffer, v->neigbhors, v->count * 2 * sizeof(unsigned int));
+    counter += v->count * 2;
+    extention *current = v->next;
+    while (current != NULL)
+    {
+        memcpy(&buffer[counter], current->neigbhors, current->count * 2 * sizeof(unsigned int));
+        counter += current->count * 2;
+        current = current->next;
+    }
+    deallocateExtentions(v);
+    v->next = NULL;
+    v->last = NULL;
+    v->count = count;
+    free(v->neigbhors);
+    v->neigbhors = buffer;
+}
+
+void swap(unsigned int *a, unsigned int *b)
+{
+    unsigned int wa = a[1];
+    unsigned int t = a[0];
+    a[0] = b[0];
+    a[1] = b[1];
+    b[0] = t;
+    b[1] = wa;
+}
+
+void bubbleSort(unsigned int *array, unsigned int low, unsigned int high)
+{
+    char flag = 0;
+    do
+    {
+        flag = 0;
+        for(unsigned int i = low; i < high - 1; i++)
+        {
+            if(array[2 * i] > array[2 * i + 2])
+            {
+                flag = 1;
+                swap(&array[2 * i], &array[2 * i + 2]);
+            }
+        }
+    } while (flag);
+}
+
+int partition(unsigned int *array, int low, int high)
+{
+    unsigned int pivot = array[2 * high];
+    unsigned int greater = low - 1;
+
+    for (unsigned int i = low; i < high; i++)
+    {
+        if (array[2 * i] < pivot)
+        {
+            greater++;
+            swap(&array[2 * i], &array[2 * greater]);
+        }
+    }
+
+    swap(&array[2 * greater + 2], &array[2 * high]);
+    return greater + 1;
+}
+
+void quickShort(unsigned int *array, int low, int high)//Replace quicksort
+{
+    //printf("%u %u\n", low, high);
+    if (low < high )
+    {
+        unsigned int pivot = partition(array, low, high);
+       
+        quickShort(array, low, pivot - 1);
+        
+        quickShort(array, pivot + 1, high);
+    }
+    // else
+    // {
+    //     bubbleSort(array, low, high);
+    // }
+}
+
+
+
+void eliminateDoubles(vertex *v)
+{
+    if (v->next != NULL)
+    {
+        printf("Convert vertex before eliminating doubles");
+        return;
+    }
+    
+    unsigned int current = v->neigbhors[0];
+    unsigned int currentWeight = v->neigbhors[1];
+    unsigned int counter = 0;
+    
+    for(int i = 1; i < v->count; i++)
+    {
+        if(current != v->neigbhors[2 * i])
+        {
+            v->neigbhors[2 * counter] = current;
+            v->neigbhors[2 * counter + 1] = currentWeight;
+            counter++;
+            current = v->neigbhors[2 * i];
+            currentWeight = v->neigbhors[2 * i + 1];
+        }
+        else
+        {
+            if(currentWeight > v->neigbhors[2 * i + 1])
+            {
+                currentWeight = v->neigbhors[2 * i + 1];
+            }
+        }
+    }
+
+    v->neigbhors[2 * counter] = current;
+    v->neigbhors[2 * counter + 1] = currentWeight;
+    counter++;
+    v->count = counter;
+}
+
+void printFromList(unsigned long *offsetList, unsigned int* edgeList, unsigned int id)
+{
+    unsigned long start = offsetList[id];
+    unsigned long end = offsetList[id + 1];
+    printf("id: %u count:%d list:\n", id, (int)(end - start));
+    for(int i = start; i < end; i++)
+    {
+        printf(GRN "%u " RESET, edgeList[2 * i]);
+        printf(RED "%u " RESET, edgeList[2 * i + 1]);
+    }
+    printf("\n");
+}
+
 int main(int argc, char *argv[])
 {
     unsigned int defaultWeight;
 
-    if (argc == 3)
+    if (argc == 3 || argc == 4)
     {
-        
+
         int read = sscanf(argv[2], "%u", &defaultWeight);
-        if(read == 0)
+        if (read == 0)
         {
             defaultWeight = 1;
         }
@@ -222,23 +382,29 @@ int main(int argc, char *argv[])
     {
         return -1;
     }
-
+    
     vertexBuffer *graph = extendBuffer(NULL);
-
+   
     char *buffer = (char *)calloc(256, sizeof(char));
     FILE *fd = fopen(argv[1], "r");
-    if(fd == NULL)
+    if (fd == NULL)
     {
         printf("No such file exists");
         return -1;
     }
+
     int counter = 0;
-    int edgesCounter = 0;
+    unsigned long maxVertex = 0;
     char last;
+   
     while (last = fgetc(fd))
     {
         if (last == EOF)
         {
+            if(counter == 0)
+            {
+                break;
+            }
             counter = 0;
             unsigned int v1, v2, w;
             int numberRead = sscanf(buffer, "%u %u", &v1, &v2);
@@ -248,9 +414,16 @@ int main(int argc, char *argv[])
             }
             if (numberRead == 2 || numberRead == 3)
             {
-                edgesCounter++;
                 addEdge(v2, getVertex(graph, v1), w);
                 addEdge(v1, getVertex(graph, v2), w);
+                if (maxVertex < v1)
+                {
+                    maxVertex = v1;
+                }
+                if (maxVertex < v2)
+                {
+                    maxVertex = v2;
+                }
             }
             break;
         }
@@ -260,7 +433,6 @@ int main(int argc, char *argv[])
 
         if (last == '\n')
         {
-            counter = 0;
             unsigned int v1, v2, w;
             int numberRead = sscanf(buffer, "%u %u %u", &v1, &v2, &w);
 
@@ -270,19 +442,144 @@ int main(int argc, char *argv[])
             }
             if (numberRead == 2 || numberRead == 3)
             {
-                edgesCounter++;
                 addEdge(v2, getVertex(graph, v1), w);
                 addEdge(v1, getVertex(graph, v2), w);
+                if (maxVertex < v1)
+                {
+                    maxVertex = v1;
+                }
+                if (maxVertex < v2)
+                {
+                    maxVertex = v2;
+                }
             }
+            memset(buffer, 0, counter * sizeof(char));
+            counter = 0;
         }
     }
 
     fclose(fd);
-    while (1)
+    unsigned long edgesCount = 0;
+   
+    for (int i = 0; i <= maxVertex; i++)
     {
-        unsigned int id;
-        printf("Give an id to print the vertex\n");
-        scanf("%u", &id);
-        printVertex(getVertex(graph, id));
+        vertex *v = getVertex(graph, i);
+        convertVertex(v);
+        bubbleSort(v->neigbhors, 0, v->count);
+        eliminateDoubles(v);
+        edgesCount += v->count;
+    }
+    // for (int i = 0; i <= maxVertex; i++)
+    // {
+    //     vertex *v = getVertex(graph, i);
+    //     bubbleSort(v->neigbhors, 0, v->count);
+    // }
+
+    // for (int i = 0; i <= maxVertex; i++)
+    // {
+    //     vertex *v = getVertex(graph, i);
+    //     eliminateDoubles(v);
+    // }
+
+    // while (1)
+    // {
+    //     unsigned int id, scanned;
+    //     char op;
+    //     printf("Give an id to print\n");
+    //     scanned = scanf("%c %u", &op, &id);
+    //     if (op == 'p')
+    //     {
+    //         printVertex(getVertex(graph, id));
+    //     }
+    //     // if(op == 'c')
+    //     // {
+    //     //     convertVertex(getVertex(graph, id));
+    //     // }
+    //     // if (op == 's')
+    //     // {
+    //     //     vertex *v = getVertex(graph,id);
+    //     //     quickShort(v->neigbhors, 0, v->count);
+    //     //     //eliminateDoubles(getVertex(graph, id));
+    //     //     printVertex(getVertex(graph, id));
+    //     // }
+    //     if (op == 'x')
+    //     {
+    //         break;
+    //     }
+    // }
+
+    size_t graphSize = sizeof(unsigned long) * (2 + maxVertex + 2) + sizeof(unsigned int) * (edgesCount * 2);
+    unsigned long*
+
+    graphMemory = (unsigned long*)(malloc(graphSize));
+    graphMemory[0] = maxVertex;
+    graphMemory[1] = edgesCount;
+    unsigned long *offsetList = &graphMemory[2];
+    unsigned int *edgesList = (unsigned int*)&offsetList[maxVertex + 2];
+
+    unsigned long c = 0;
+    for (unsigned int i = 0; i <= maxVertex; i++)
+    {
+        vertex *v = getVertex(graph, i);
+        offsetList[i] = c;
+        memcpy(&edgesList[c * 2], v->neigbhors, 2 * sizeof(unsigned int) * v->count);
+        c += v->count;
+        deallocateVertex(v);
+    }
+    
+    deallocateVertexBuffer(graph);
+
+    offsetList[maxVertex + 1] = c;
+    
+    // printf("Offset list\n");
+    // for(int i = 0; i < maxVertex + 2; i++)
+    // {
+    //     printf("%lu ", offsetList[i]);
+    // }
+
+    // printf("\n");
+
+    // for(int i = 0; i < edgesCount; i++)
+    // {
+    //     printf(GRN "%u " RESET, edgesList[2 * i]);
+    //     printf(RED "%u " RESET, edgesList[2 * i + 1]);
+    // }
+
+    // printf("\n");
+
+    if(argc == 3)
+    {
+        while (1)
+        {
+            unsigned int id, scanned;
+            char op;
+            printf("Give an id to print from new graph\n");
+            scanned = scanf("%c %u", &op, &id);
+            if (op == 'p')
+            {
+                printFromList(offsetList, edgesList, id);
+            }
+            
+            if (op == 'x')
+            {
+                break;
+            }
+        }
+    }
+    else
+    {
+        int fd = open(argv[3], O_CREAT | O_RDWR | O_TRUNC);
+        int ret = ftruncate(fd, graphSize);
+        unsigned long *map = (unsigned long*)mmap(NULL, graphSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+        memcpy(map, graphMemory, graphSize);
+        ret = msync(map,graphSize,MS_SYNC);
+        if(ret != 0)
+        {
+            printf("Mapping failed with %d\n", ret);
+        }
+        else
+        {
+            printf("OK\n");
+        }
     }
 }
