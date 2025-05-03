@@ -512,7 +512,7 @@ int main(int argc, char *argv[])
     unsigned long*
 
     graphMemory = (unsigned long*)(malloc(graphSize));
-    graphMemory[0] = maxVertex;
+    graphMemory[0] = maxVertex + 1;
     graphMemory[1] = edgesCount;
     unsigned long *offsetList = &graphMemory[2];
     unsigned int *edgesList = (unsigned int*)&offsetList[maxVertex + 2];

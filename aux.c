@@ -43,90 +43,98 @@
     _a < _b ? _a : _b;       \
 })
 
-char* LL_INPUT_GRAPH_PATH = "data/test_csr.txt";
-char* LL_INPUT_GRAPH_TYPE = "text";
-char LL_INPUT_GRAPH_BASE_NAME [256] = {0};
-unsigned int LL_INPUT_GRAPH_BATCH_ORDER = 0;
-unsigned int LL_INPUT_GRAPH_IS_SYMMETRIC = 0;
-unsigned int LL_STORE_INPUT_GRAPH_IN_SHM = 0;
-char* LL_OUTPUT_REPORT_PATH = NULL;
-char* LL_GRAPH_RA_BIN_FOLDER = "data/RA_bin_arrays";
-unsigned int WEIGHTED_DATA_GRAPH = 0;
+// char* LL_INPUT_GRAPH_PATH = "data/test_csr.txt";
+// char* LL_INPUT_GRAPH_TYPE = "text";
+// char LL_INPUT_GRAPH_BASE_NAME [256] = {0};
+// unsigned int LL_INPUT_GRAPH_BATCH_ORDER = 0;
+// unsigned int LL_INPUT_GRAPH_IS_SYMMETRIC = 0;
+// unsigned int LL_STORE_INPUT_GRAPH_IN_SHM = 0;
+// char* LL_OUTPUT_REPORT_PATH = NULL;
+// char* LL_GRAPH_RA_BIN_FOLDER = "data/RA_bin_arrays";
+// unsigned int WEIGHTED_DATA_GRAPH = 0;
 
+// void read_env_vars()
+// {
+// 	char* temp = getenv("LL_INPUT_GRAPH_PATH");
+// 	if(temp != NULL)
+// 		LL_INPUT_GRAPH_PATH = temp;
+
+// 	temp = getenv("LL_INPUT_GRAPH_TYPE");
+// 	if(temp != NULL)
+// 		LL_INPUT_GRAPH_TYPE = temp;
+	
+// 	{
+// 		int len = strlen(LL_INPUT_GRAPH_PATH);
+// 		temp = calloc(len + 64, 1);
+// 		assert(temp != NULL);
+
+// 		if(strcmp(LL_INPUT_GRAPH_TYPE, "text") == 0)
+// 		{
+// 			sprintf(temp, "%s", LL_INPUT_GRAPH_PATH);
+// 			char* bn = basename(temp);
+// 			int bn_len = strlen(bn);
+// 			bn_len = min(bn_len - strlen(".txt"), 256);
+// 			sprintf(LL_INPUT_GRAPH_BASE_NAME, "%.*s", bn_len, bn);
+// 		}
+// 		else if( strcmp(LL_INPUT_GRAPH_TYPE, "PARAGRAPHER_CSX_WG_400_AP") == 0 ||
+// 			strcmp(LL_INPUT_GRAPH_TYPE, "PARAGRAPHER_CSX_WG_404_AP") == 0 ||
+// 		 	strcmp(LL_INPUT_GRAPH_TYPE, "PARAGRAPHER_CSX_WG_800_AP") == 0
+// 		)
+// 		{
+// 			sprintf(temp, "%s.properties", LL_INPUT_GRAPH_PATH);
+// 			char* bn = basename(temp);
+// 			int bn_len = strlen(bn);
+// 			bn_len = min(bn_len - strlen(".properties"), 256);
+// 			sprintf(LL_INPUT_GRAPH_BASE_NAME, "%.*s", bn_len, bn);
+// 		}
+
+// 		free(temp);
+// 		temp = NULL;
+// 	}
+
+// 	temp = getenv("LL_INPUT_GRAPH_BATCH_ORDER");
+// 	if(temp != NULL)
+// 		LL_INPUT_GRAPH_BATCH_ORDER = atoi(temp);
+
+// 	temp = getenv("LL_INPUT_GRAPH_IS_SYMMETRIC");
+// 	if(temp != NULL && strcmp(temp, "1") == 0)
+// 		LL_INPUT_GRAPH_IS_SYMMETRIC = 1;
+
+// 	temp = getenv("LL_STORE_INPUT_GRAPH_IN_SHM");
+// 	if(temp != NULL && strcmp(temp, "1") == 0)
+// 		LL_STORE_INPUT_GRAPH_IN_SHM = 1;
+
+// 	temp = getenv("LL_OUTPUT_REPORT_PATH");
+// 	if(temp != NULL && strlen(temp) > 0)
+// 		LL_OUTPUT_REPORT_PATH = temp;
+
+// 	temp = getenv("LL_GRAPH_RA_BIN_FOLDER");
+// 	if(temp != NULL)
+// 		LL_GRAPH_RA_BIN_FOLDER = temp;
+// 	temp = getenv("WEIGHTED_DATA_GRAPH");
+// 	if(temp != NULL && strcmp(temp, "1") == 0)
+// 		WEIGHTED_DATA_GRAPH = 1;
+
+// 	printf("\n\033[2;32mEnv Vars:\033[0;37m\n");
+// 	printf("    LL_INPUT_GRAPH_PATH:         %s\n", LL_INPUT_GRAPH_PATH);
+// 	printf("    LL_INPUT_GRAPH_BASE_NAME:    %s\n", LL_INPUT_GRAPH_BASE_NAME);
+// 	printf("    LL_INPUT_GRAPH_TYPE:         %s\n", LL_INPUT_GRAPH_TYPE);
+// 	printf("    LL_INPUT_GRAPH_BATCH_ORDER:  %u\n", LL_INPUT_GRAPH_BATCH_ORDER);
+// 	printf("    LL_INPUT_GRAPH_IS_SYMMETRIC: %u\n", LL_INPUT_GRAPH_IS_SYMMETRIC);
+// 	printf("    LL_STORE_INPUT_GRAPH_IN_SHM: %u\n", LL_STORE_INPUT_GRAPH_IN_SHM);
+// 	printf("    LL_OUTPUT_REPORT_PATH:       %s\n", LL_OUTPUT_REPORT_PATH);
+// 	printf("    LL_GRAPH_RA_BIN_FOLDER:      %s\n", LL_GRAPH_RA_BIN_FOLDER);
+// 	printf("    WEIGHTED_DATA_GRAPH:         %u\n", WEIGHTED_DATA_GRAPH);
+	
+// 	return;
+// }
+
+char* LL_INPUT_GRAPH_PATH = "data/test_csr.txt";
 void read_env_vars()
 {
 	char* temp = getenv("LL_INPUT_GRAPH_PATH");
 	if(temp != NULL)
 		LL_INPUT_GRAPH_PATH = temp;
-
-	temp = getenv("LL_INPUT_GRAPH_TYPE");
-	if(temp != NULL)
-		LL_INPUT_GRAPH_TYPE = temp;
-	
-	{
-		int len = strlen(LL_INPUT_GRAPH_PATH);
-		temp = calloc(len + 64, 1);
-		assert(temp != NULL);
-
-		if(strcmp(LL_INPUT_GRAPH_TYPE, "text") == 0)
-		{
-			sprintf(temp, "%s", LL_INPUT_GRAPH_PATH);
-			char* bn = basename(temp);
-			int bn_len = strlen(bn);
-			bn_len = min(bn_len - strlen(".txt"), 256);
-			sprintf(LL_INPUT_GRAPH_BASE_NAME, "%.*s", bn_len, bn);
-		}
-		else if( strcmp(LL_INPUT_GRAPH_TYPE, "PARAGRAPHER_CSX_WG_400_AP") == 0 ||
-			strcmp(LL_INPUT_GRAPH_TYPE, "PARAGRAPHER_CSX_WG_404_AP") == 0 ||
-		 	strcmp(LL_INPUT_GRAPH_TYPE, "PARAGRAPHER_CSX_WG_800_AP") == 0
-		)
-		{
-			sprintf(temp, "%s.properties", LL_INPUT_GRAPH_PATH);
-			char* bn = basename(temp);
-			int bn_len = strlen(bn);
-			bn_len = min(bn_len - strlen(".properties"), 256);
-			sprintf(LL_INPUT_GRAPH_BASE_NAME, "%.*s", bn_len, bn);
-		}
-
-		free(temp);
-		temp = NULL;
-	}
-
-	temp = getenv("LL_INPUT_GRAPH_BATCH_ORDER");
-	if(temp != NULL)
-		LL_INPUT_GRAPH_BATCH_ORDER = atoi(temp);
-
-	temp = getenv("LL_INPUT_GRAPH_IS_SYMMETRIC");
-	if(temp != NULL && strcmp(temp, "1") == 0)
-		LL_INPUT_GRAPH_IS_SYMMETRIC = 1;
-
-	temp = getenv("LL_STORE_INPUT_GRAPH_IN_SHM");
-	if(temp != NULL && strcmp(temp, "1") == 0)
-		LL_STORE_INPUT_GRAPH_IN_SHM = 1;
-
-	temp = getenv("LL_OUTPUT_REPORT_PATH");
-	if(temp != NULL && strlen(temp) > 0)
-		LL_OUTPUT_REPORT_PATH = temp;
-
-	temp = getenv("LL_GRAPH_RA_BIN_FOLDER");
-	if(temp != NULL)
-		LL_GRAPH_RA_BIN_FOLDER = temp;
-	temp = getenv("WEIGHTED_DATA_GRAPH");
-	if(temp != NULL && strcmp(temp, "1") == 0)
-		WEIGHTED_DATA_GRAPH = 1;
-
-	printf("\n\033[2;32mEnv Vars:\033[0;37m\n");
-	printf("    LL_INPUT_GRAPH_PATH:         %s\n", LL_INPUT_GRAPH_PATH);
-	printf("    LL_INPUT_GRAPH_BASE_NAME:    %s\n", LL_INPUT_GRAPH_BASE_NAME);
-	printf("    LL_INPUT_GRAPH_TYPE:         %s\n", LL_INPUT_GRAPH_TYPE);
-	printf("    LL_INPUT_GRAPH_BATCH_ORDER:  %u\n", LL_INPUT_GRAPH_BATCH_ORDER);
-	printf("    LL_INPUT_GRAPH_IS_SYMMETRIC: %u\n", LL_INPUT_GRAPH_IS_SYMMETRIC);
-	printf("    LL_STORE_INPUT_GRAPH_IN_SHM: %u\n", LL_STORE_INPUT_GRAPH_IN_SHM);
-	printf("    LL_OUTPUT_REPORT_PATH:       %s\n", LL_OUTPUT_REPORT_PATH);
-	printf("    LL_GRAPH_RA_BIN_FOLDER:      %s\n", LL_GRAPH_RA_BIN_FOLDER);
-	printf("    WEIGHTED_DATA_GRAPH:         %u\n", WEIGHTED_DATA_GRAPH);
-	
-	return;
 }
 
 double get_standard_deviation(double* data, int count)

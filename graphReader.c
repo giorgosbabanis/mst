@@ -36,7 +36,9 @@ int main(int argc, char** argv)
 
     unsigned long vertices = graph[0], edges = graph[1];
     unsigned long *offsetList = &graph[2];
-    unsigned int *edgesList = (unsigned int*)&offsetList[vertices + 2];
+    unsigned int *edgesList = (unsigned int*)&graph[2 + graph[0] + 2];
+
+    printf("total vertices %lu, total edges %lu", vertices, edges);
     while (1)
         {
             unsigned int id, scanned;
