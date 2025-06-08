@@ -1,6 +1,6 @@
 ![LaganLighter](docs/images/lagan.jpg)
 
-# [LaganLighter:  Structure-Aware High-Performance Graph Algorithms](https://blogs.qub.ac.uk/DIPSA/LaganLighter/)
+# [LaganLighter:  Structure-Aware High-Performance Graph Algorithms](https://blogs.qub.ac.uk/DIPSA/Lalg3_mastiff.c aux.c cc.c graph.c graphCreator.c graphTextHandler.c graphReader.c Makefile msf.c omp.c partitioning.c trans.caganLighter/)
 
 This repository contains the shared-memory CPU-based soure code of the LaganLighter project: https://blogs.qub.ac.uk/DIPSA/LaganLighter .   
 
