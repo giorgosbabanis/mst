@@ -133,40 +133,40 @@ char* get_shm_graph_name(char* file_name)
 	return ret;
 }
 
-struct ll_400_graph* get_shm_ll_400_graph(char* file_name, unsigned long vertices_count, unsigned long edges_count)
-{
-	char* shm_name = get_shm_graph_name(file_name);
-	printf("shm_name: %s\n", shm_name);
-	unsigned long graph_size = (2 + vertices_count + 1) * sizeof(unsigned long) + edges_count * sizeof(unsigned int);
+// struct ll_400_graph* get_shm_ll_400_graph(char* file_name, unsigned long vertices_count, unsigned long edges_count)
+// {
+// 	char* shm_name = get_shm_graph_name(file_name);
+// 	printf("shm_name: %s\n", shm_name);
+// 	unsigned long graph_size = (2 + vertices_count + 1) * sizeof(unsigned long) + edges_count * sizeof(unsigned int);
 
-	struct ll_400_graph* g = NULL;
-	int shm_fd = shm_open(shm_name, O_RDONLY, 0);
-	if(shm_fd > 0)
-	{
-		printf("Shared memory file exists.\n");
-		unsigned long* ul_graph = (unsigned long*)mmap(NULL, graph_size, PROT_READ, MAP_PRIVATE, shm_fd, 0);
-		if(ul_graph == MAP_FAILED)
-		{
-			printf("Couldn't get graph -> mmap error : %d, %s\n", errno, strerror(errno) );
-			assert (ul_graph != MAP_FAILED);
-		}
-		close(shm_fd);
-		shm_fd = -1;
+// 	struct ll_400_graph* g = NULL;
+// 	int shm_fd = shm_open(shm_name, O_RDONLY, 0);
+// 	if(shm_fd > 0)
+// 	{
+// 		printf("Shared memory file exists.\n");
+// 		unsigned long* ul_graph = (unsigned long*)mmap(NULL, graph_size, PROT_READ, MAP_PRIVATE, shm_fd, 0);
+// 		if(ul_graph == MAP_FAILED)
+// 		{
+// 			printf("Couldn't get graph -> mmap error : %d, %s\n", errno, strerror(errno) );
+// 			assert (ul_graph != MAP_FAILED);
+// 		}
+// 		close(shm_fd);
+// 		shm_fd = -1;
 		
-		g = malloc(sizeof(struct ll_400_graph));
-		assert(g != NULL);
-		g->vertices_count = ul_graph[0];
-		g->edges_count = ul_graph[1];
-		g->offsets_list = &ul_graph[2];
-		g->edges_list = (unsigned int*)(&ul_graph[ 2 + ul_graph[0] + 1 ]);
-	}
+// 		g = malloc(sizeof(struct ll_400_graph));
+// 		assert(g != NULL);
+// 		g->vertices_count = ul_graph[0];
+// 		g->edges_count = ul_graph[1];
+// 		g->offsets_list = &ul_graph[2];
+// 		g->edges_list = (unsigned int*)(&ul_graph[ 2 + ul_graph[0] + 1 ]);
+// 	}
 
-	// Release mem
-		free(shm_name);
-		shm_name = NULL;
+// 	// Release mem
+// 		free(shm_name);
+// 		shm_name = NULL;
 
-	return g;
-}
+// 	return g;
+// }
 
 /*
 	`flags`:
@@ -178,165 +178,165 @@ struct ll_400_graph* get_shm_ll_400_graph(char* file_name, unsigned long vertice
 			This flag should be used for releasing the graph. If it is set, `release_shm_ll_400_graph()` should be called.
 			Otherwise, `release_numa_interleaved_ll_400_graph()` should be called.
 */
-struct ll_400_graph* get_ll_400_txt_graph(char* file_name, unsigned int* flags)
-{
-	// Checks 
-		assert(flags != NULL);
+// struct ll_400_graph* get_ll_400_txt_graph(char* file_name, unsigned int* flags)
+// {
+// 	// Checks 
+// 		assert(flags != NULL);
 
-		if(access(file_name, F_OK) != 0)
-		{
-			printf("Error: file \"%s\" does not exist\n",file_name);
-			return NULL;
-		}
+// 		if(access(file_name, F_OK) != 0)
+// 		{
+// 			printf("Error: file \"%s\" does not exist\n",file_name);
+// 			return NULL;
+// 		}
 
-	// Reading vertices and edges count and graph size
-		unsigned long vertices_count = 0;
-		unsigned long edges_count = 0;	
-		{
-			char temp[512];
-			sprintf(temp, "head -n1 %s", file_name);
-			FILE *fp = popen(temp, "r");
-			int ret = fscanf(fp, "%lu", &vertices_count);
-			assert(ret == 1);
-			pclose(fp);
-			printf("Vertices: %'lu\n",vertices_count);
+// 	// Reading vertices and edges count and graph size
+// 		unsigned long vertices_count = 0;
+// 		unsigned long edges_count = 0;	
+// 		{
+// 			char temp[512];
+// 			sprintf(temp, "head -n1 %s", file_name);
+// 			FILE *fp = popen(temp, "r");
+// 			int ret = fscanf(fp, "%lu", &vertices_count);
+// 			assert(ret == 1);
+// 			pclose(fp);
+// 			printf("Vertices: %'lu\n",vertices_count);
 
-			sprintf(temp, "head -n2 %s | tail -n1", file_name);
-			fp = popen(temp, "r");
-			ret = fscanf(fp, "%lu", &edges_count);
-			assert(ret == 1);
-			pclose(fp);
-			printf("Edges: %'lu\n",edges_count);
-		}
+// 			sprintf(temp, "head -n2 %s | tail -n1", file_name);
+// 			fp = popen(temp, "r");
+// 			ret = fscanf(fp, "%lu", &edges_count);
+// 			assert(ret == 1);
+// 			pclose(fp);
+// 			printf("Edges: %'lu\n",edges_count);
+// 		}
 
-	// Check if the graph exists in /dev/shm
-		if((*flags & 1U<<0) == 0)
-		{
-			struct ll_400_graph* g = get_shm_ll_400_graph(file_name, vertices_count, edges_count);
-			if(g != NULL)
-			{
-				assert(vertices_count == g->vertices_count);
-				assert(edges_count == g->edges_count);
+// 	// Check if the graph exists in /dev/shm
+// 		if((*flags & 1U<<0) == 0)
+// 		{
+// 			struct ll_400_graph* g = get_shm_ll_400_graph(file_name, vertices_count, edges_count);
+// 			if(g != NULL)
+// 			{
+// 				assert(vertices_count == g->vertices_count);
+// 				assert(edges_count == g->edges_count);
 
-				print_ll_400_graph(g);
-				*flags |= 1U<<31;
-				return g;
-			}
-		}
+// 				print_ll_400_graph(g);
+// 				*flags |= 1U<<31;
+// 				return g;
+// 			}
+// 		}
 		
-	// Allocate memory
-		struct ll_400_graph* g =calloc(sizeof(struct ll_404_graph),1);
-		assert(g != NULL);
-		g->vertices_count = vertices_count;
-		g->edges_count = edges_count;
-		g->offsets_list = numa_alloc_interleaved(sizeof(unsigned long) * (1 + g->vertices_count));
-		assert(g->offsets_list != NULL);
-		g->edges_list = numa_alloc_interleaved(sizeof(unsigned int) * g->edges_count);
-		assert(g->edges_list != NULL);
+// 	// Allocate memory
+// 		struct ll_400_graph* g =calloc(sizeof(struct ll_404_graph),1);
+// 		assert(g != NULL);
+// 		g->vertices_count = vertices_count;
+// 		g->edges_count = edges_count;
+// 		g->offsets_list = numa_alloc_interleaved(sizeof(unsigned long) * (1 + g->vertices_count));
+// 		assert(g->offsets_list != NULL);
+// 		g->edges_list = numa_alloc_interleaved(sizeof(unsigned int) * g->edges_count);
+// 		assert(g->edges_list != NULL);
 		
-	// Reading graph from disk
-	{
-		int fd=open(file_name, O_RDONLY | O_DIRECT);
-		if(fd<0)
-		{
-			printf("Can't open the file: %d - %s\n",errno,strerror(errno));
-			return NULL;
-		}
+// 	// Reading graph from disk
+// 	{
+// 		int fd=open(file_name, O_RDONLY | O_DIRECT);
+// 		if(fd<0)
+// 		{
+// 			printf("Can't open the file: %d - %s\n",errno,strerror(errno));
+// 			return NULL;
+// 		}
 
-		unsigned long buf_size=4096UL * 1024 * 24;
-		char* buf=malloc(sizeof(char)*buf_size);
-		assert(buf != NULL);
-		char* main_buff_address = buf;
+// 		unsigned long buf_size=4096UL * 1024 * 24;
+// 		char* buf=malloc(sizeof(char)*buf_size);
+// 		assert(buf != NULL);
+// 		char* main_buff_address = buf;
 		
-		// 4096 alignment of buf for O_DIRECT
-		if((unsigned long)buf % 4096)
-		{
-			unsigned long excess = 4096 - (unsigned long)buf % 4096 ;
-			buf = (char*)((unsigned long)buf + excess);
-			buf_size -= 4096;
- 		}
+// 		// 4096 alignment of buf for O_DIRECT
+// 		if((unsigned long)buf % 4096)
+// 		{
+// 			unsigned long excess = 4096 - (unsigned long)buf % 4096 ;
+// 			buf = (char*)((unsigned long)buf + excess);
+// 			buf_size -= 4096;
+//  		}
 
-		long count=-1;
+// 		long count=-1;
 
-		unsigned long val=0;
-		unsigned int val_length=0;
-		unsigned int status=0;
+// 		unsigned long val=0;
+// 		unsigned int val_length=0;
+// 		unsigned int status=0;
 
-		unsigned long t1=get_nano_time();
-		unsigned long vl_count=0;
-		unsigned long el_count=0;
-		unsigned long total_read_bytes = 0;
+// 		unsigned long t1=get_nano_time();
+// 		unsigned long vl_count=0;
+// 		unsigned long el_count=0;
+// 		unsigned long total_read_bytes = 0;
 
-		while((count=read(fd, buf, buf_size)) > 0)
-		{
-			total_read_bytes += count;
-			int i=0;
+// 		while((count=read(fd, buf, buf_size)) > 0)
+// 		{
+// 			total_read_bytes += count;
+// 			int i=0;
 
-			while(i<count)
-			{
-				//if(i<50) printf("status: %d, v: %c\n",status,buf[i]);
-				if(buf[i]!='\n' && buf[i]!=' ')
-				{
-					val = val * 10 + (buf[i]-'0');
-					val_length++;
-				}
-				else if(val_length)
-				{
-					switch(status)
-					{
-						case 0:
-							assert(vertices_count == val);
-							break;
+// 			while(i<count)
+// 			{
+// 				//if(i<50) printf("status: %d, v: %c\n",status,buf[i]);
+// 				if(buf[i]!='\n' && buf[i]!=' ')
+// 				{
+// 					val = val * 10 + (buf[i]-'0');
+// 					val_length++;
+// 				}
+// 				else if(val_length)
+// 				{
+// 					switch(status)
+// 					{
+// 						case 0:
+// 							assert(vertices_count == val);
+// 							break;
 
-						case 1:
-							assert(edges_count == val);
-							break;
+// 						case 1:
+// 							assert(edges_count == val);
+// 							break;
 
-						case 2:
-							g->offsets_list[vl_count++]=val;
-							break;
+// 						case 2:
+// 							g->offsets_list[vl_count++]=val;
+// 							break;
 
-						case 3:
-							assert(val < (1UL<<32));
-							g->edges_list[el_count++]=val;
-							break;
-					}
-					val=0;
-					val_length=0;
-				}
+// 						case 3:
+// 							assert(val < (1UL<<32));
+// 							g->edges_list[el_count++]=val;
+// 							break;
+// 					}
+// 					val=0;
+// 					val_length=0;
+// 				}
 				
-				if(buf[i] == '\n')
-					status++;
+// 				if(buf[i] == '\n')
+// 					status++;
 
-				i++;
-			}	
-		}
+// 				i++;
+// 			}	
+// 		}
 
-		assert(count >= 0);
-		assert(el_count == edges_count);
-		assert(vl_count == vertices_count);
+// 		assert(count >= 0);
+// 		assert(el_count == edges_count);
+// 		assert(vl_count == vertices_count);
 
-		free(main_buff_address);
-		main_buff_address = NULL;
-		buf = NULL;
-		close(fd);
-		fd = -1;
+// 		free(main_buff_address);
+// 		main_buff_address = NULL;
+// 		buf = NULL;
+// 		close(fd);
+// 		fd = -1;
 
-		g->offsets_list[g->vertices_count]=g->edges_count;
+// 		g->offsets_list[g->vertices_count]=g->edges_count;
 
-		printf("Reading %'.1f (MB) completed in %'.3f (seconds)\n", total_read_bytes/1e6, (get_nano_time() - t1)/1e9); 
-	}
+// 		printf("Reading %'.1f (MB) completed in %'.3f (seconds)\n", total_read_bytes/1e6, (get_nano_time() - t1)/1e9); 
+// 	}
 
-	// Printing the first vals in the read graph
-		print_ll_400_graph(g);
+// 	// Printing the first vals in the read graph
+// 		print_ll_400_graph(g);
 
-	// Flush the OS cache
-		flush_os_cache();
+// 	// Flush the OS cache
+// 		flush_os_cache();
 
-	*flags &= ~(1U<<31);
+// 	*flags &= ~(1U<<31);
 
-	return g;	
-}
+// 	return g;	
+// }
 
 
 struct ll_404_graph* get_ll_404_txt_graph(char* file_name, unsigned int* flags)
@@ -499,40 +499,40 @@ struct ll_404_graph* get_ll_404_txt_graph(char* file_name, unsigned int* flags)
 
 
 
-struct ll_404_graph* get_shm_ll_404_graph(char* file_name, unsigned long vertices_count, unsigned long edges_count)
-{
-	char* shm_name = get_shm_graph_name(file_name);
-	printf("shm_name: %s\n", shm_name);
-	unsigned long graph_size = (2 + vertices_count + 1) * sizeof(unsigned long) + 2UL * edges_count * sizeof(unsigned int);
+// struct ll_404_graph* get_shm_ll_404_graph(char* file_name, unsigned long vertices_count, unsigned long edges_count)
+// {
+// 	char* shm_name = get_shm_graph_name(file_name);
+// 	printf("shm_name: %s\n", shm_name);
+// 	unsigned long graph_size = (2 + vertices_count + 1) * sizeof(unsigned long) + 2UL * edges_count * sizeof(unsigned int);
 
-	struct ll_404_graph* g = NULL;
-	int shm_fd = shm_open(shm_name, O_RDONLY, 0);
-	if(shm_fd > 0)
-	{
-		printf("Shared memory file exists.\n");
-		unsigned long* ul_graph = (unsigned long*)mmap(NULL, graph_size, PROT_READ, MAP_PRIVATE, shm_fd, 0);
-		if(ul_graph == MAP_FAILED)
-		{
-			printf("Couldn't get graph -> mmap error : %d, %s\n", errno, strerror(errno) );
-			assert (ul_graph != MAP_FAILED);
-		}
-		close(shm_fd);
-		shm_fd = -1;
+// 	struct ll_404_graph* g = NULL;
+// 	int shm_fd = shm_open(shm_name, O_RDONLY, 0);
+// 	if(shm_fd > 0)
+// 	{
+// 		printf("Shared memory file exists.\n");
+// 		unsigned long* ul_graph = (unsigned long*)mmap(NULL, graph_size, PROT_READ, MAP_PRIVATE, shm_fd, 0);
+// 		if(ul_graph == MAP_FAILED)
+// 		{
+// 			printf("Couldn't get graph -> mmap error : %d, %s\n", errno, strerror(errno) );
+// 			assert (ul_graph != MAP_FAILED);
+// 		}
+// 		close(shm_fd);
+// 		shm_fd = -1;
 		
-		g = malloc(sizeof(struct ll_404_graph));
-		assert(g != NULL);
-		g->vertices_count = ul_graph[0];
-		g->edges_count = ul_graph[1];
-		g->offsets_list = &ul_graph[2];
-		g->edges_list = (unsigned int*)(&ul_graph[ 2 + ul_graph[0] + 1 ]);
-	}
+// 		g = malloc(sizeof(struct ll_404_graph));
+// 		assert(g != NULL);
+// 		g->vertices_count = ul_graph[0];
+// 		g->edges_count = ul_graph[1];
+// 		g->offsets_list = &ul_graph[2];
+// 		g->edges_list = (unsigned int*)(&ul_graph[ 2 + ul_graph[0] + 1 ]);
+// 	}
 
-	// Release mem
-		free(shm_name);
-		shm_name = NULL;
+// 	// Release mem
+// 		free(shm_name);
+// 		shm_name = NULL;
 
-	return g;
-}
+// 	return g;
+// }
 
 
 /*
@@ -550,75 +550,75 @@ struct ll_404_graph* get_shm_ll_404_graph(char* file_name, unsigned long vertice
 	flags:
 		bit 0: Directly use `file_name` without calling `get_shm_graph_name()`.
 */
-int store_shm_ll_400_graph(struct par_env* pe, char* file_name, struct ll_400_graph* g, unsigned int flags)
-{
-	assert(file_name != NULL && g != NULL);
+// int store_shm_ll_400_graph(struct par_env* pe, char* file_name, struct ll_400_graph* g, unsigned int flags)
+// {
+// 	assert(file_name != NULL && g != NULL);
 
-	int ret = -1;
-	char* shm_name;
-	if(flags & 1U)
-		shm_name = file_name;
-	else
-		shm_name = get_shm_graph_name(file_name);
-	unsigned long graph_size = (2 + g->vertices_count + 1) * sizeof(unsigned long) + g->edges_count * sizeof(unsigned int);
+// 	int ret = -1;
+// 	char* shm_name;
+// 	if(flags & 1U)
+// 		shm_name = file_name;
+// 	else
+// 		shm_name = get_shm_graph_name(file_name);
+// 	unsigned long graph_size = (2 + g->vertices_count + 1) * sizeof(unsigned long) + g->edges_count * sizeof(unsigned int);
 	
-	unsigned long* sg = create_shm(shm_name, graph_size);
-	if(sg != NULL)
-	{
-		numa_interleave_allocated_memory(sg, graph_size);
+// 	unsigned long* sg = create_shm(shm_name, graph_size);
+// 	if(sg != NULL)
+// 	{
+// 		numa_interleave_allocated_memory(sg, graph_size);
 
-		sg[0] = g->vertices_count;
-		sg[1] = g->edges_count;
+// 		sg[0] = g->vertices_count;
+// 		sg[1] = g->edges_count;
 
-		#pragma omp parallel for 
-		for(unsigned int v=0; v <= g->vertices_count; v++)
-			sg[2 + v] = g->offsets_list[v];
+// 		#pragma omp parallel for 
+// 		for(unsigned int v=0; v <= g->vertices_count; v++)
+// 			sg[2 + v] = g->offsets_list[v];
 
-		unsigned int* sg_edges =(unsigned int*)(sg + 2 + g->vertices_count + 1);
-		#pragma omp parallel for 
-		for(unsigned long e=0; e < g->edges_count; e++)
-			sg_edges[e] = g->edges_list[e];
+// 		unsigned int* sg_edges =(unsigned int*)(sg + 2 + g->vertices_count + 1);
+// 		#pragma omp parallel for 
+// 		for(unsigned long e=0; e < g->edges_count; e++)
+// 			sg_edges[e] = g->edges_list[e];
 
-		int ret = msync(sg, graph_size, MS_SYNC);
-		assert(ret == 0);
+// 		int ret = msync(sg, graph_size, MS_SYNC);
+// 		assert(ret == 0);
 
-		munmap(sg, graph_size);
-		sg = NULL;
+// 		munmap(sg, graph_size);
+// 		sg = NULL;
 
-		{
-			int shm_fd = shm_open(shm_name, O_RDONLY, 0);
-			int r0 = fchmod(shm_fd, S_IRUSR|S_IRGRP|S_IROTH);
-			assert(r0 == 0);
+// 		{
+// 			int shm_fd = shm_open(shm_name, O_RDONLY, 0);
+// 			int r0 = fchmod(shm_fd, S_IRUSR|S_IRGRP|S_IROTH);
+// 			assert(r0 == 0);
 		
-			close(shm_fd);
-			shm_fd = -1;
-		}
+// 			close(shm_fd);
+// 			shm_fd = -1;
+// 		}
 
-		ret = 0;
-	}
+// 		ret = 0;
+// 	}
 
-	if(shm_name != file_name)
-	{
-		free(shm_name);
-		shm_name = NULL;
-	}
+// 	if(shm_name != file_name)
+// 	{
+// 		free(shm_name);
+// 		shm_name = NULL;
+// 	}
 
-	return ret;
-}
+// 	return ret;
+// }
 
-void delete_shm_graph_from(char* file_name)
-{
-	assert(file_name != NULL);
+// void delete_shm_graph_from(char* file_name)
+// {
+// 	assert(file_name != NULL);
 
-	char* shm_name = get_shm_graph_name(file_name);
-	int ret = shm_unlink(shm_name);
-	assert(ret == 0);
+// 	char* shm_name = get_shm_graph_name(file_name);
+// 	int ret = shm_unlink(shm_name);
+// 	assert(ret == 0);
 
-	free(shm_name);
-	shm_name = NULL;
+// 	free(shm_name);
+// 	shm_name = NULL;
 
-	return;
-}
+// 	return;
+// }
 
 void release_numa_interleaved_ll_400_graph(struct ll_400_graph* g)
 {

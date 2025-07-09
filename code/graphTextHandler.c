@@ -4,13 +4,14 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <errno.h>
 
 #define RED "\x1B[31m"
 #define GRN "\x1B[32m"
 #define RESET "\x1B[0m"
 
 const int vertexSize = 16;
-const unsigned int vertexBufferSize = 1024;
+const unsigned int vertexBufferSize = 16384;
 
 typedef struct vertex
 {
@@ -42,7 +43,7 @@ void deallocateVertex(vertex *vertex)
     extention *next = NULL;
     extention *current = vertex->next;
     free(vertex->neigbhors);
-    //free(vertex);
+    // free(vertex);
     if (current == NULL)
     {
         return;
@@ -94,6 +95,10 @@ void extend(vertex *v)
 
 void addEdge(unsigned int id, vertex *v, unsigned int weight)
 {
+    // if(id > 1000 || v->id > 1000){
+    //     return;
+    // }
+    //printf("trying to add %u %u %u\n", id, v->id, weight);
     if (v->count < vertexSize)
     {
         v->neigbhors[2 * v->count] = id;
@@ -101,10 +106,13 @@ void addEdge(unsigned int id, vertex *v, unsigned int weight)
         v->count++;
         return;
     }
-
+    // return;
     if (v->last == NULL || v->last->count == vertexSize)
     {
+        // printf("before extend\n");
+        // printf("trying to add %u %u %u\n", id, v->id, weight);
         extend(v);
+        //printf("after extend\n");
     }
     if (v->last == NULL)
     {
@@ -119,7 +127,7 @@ void addEdge(unsigned int id, vertex *v, unsigned int weight)
     v->last->neigbhors[2 * v->last->count] = id;
     v->last->neigbhors[2 * v->last->count + 1] = weight;
     v->last->count++;
-    //printf("added %u %u %u\n", id, v->id, weight);
+    // printf("ok\n");
 }
 
 void printVertex(vertex *v)
@@ -228,7 +236,8 @@ vertex *getVertex(vertexBuffer *buffer, unsigned int id)
 void convertVertex(vertex *v)
 {
     int count = v->count;
-    if(count == 0){
+    if (count == 0)
+    {
         return;
     }
     if (v->last != NULL)
@@ -271,9 +280,9 @@ void bubbleSort(unsigned int *array, int low, int high)
     do
     {
         flag = 0;
-        for(int i = low; i < high - 1; i++)
+        for (int i = low; i < high - 1; i++)
         {
-            if(array[2 * i] > array[2 * i + 2])
+            if (array[2 * i] > array[2 * i + 2])
             {
                 flag = 1;
                 swap(&array[2 * i], &array[2 * i + 2]);
@@ -300,15 +309,15 @@ int partition(unsigned int *array, int low, int high)
     return greater + 1;
 }
 
-void quickShort(unsigned int *array, int low, int high)//Replace quicksort
+void quickShort(unsigned int *array, int low, int high) // Replace quicksort
 {
-    //printf("%u %u\n", low, high);
-    if (low < high )
+    // printf("%u %u\n", low, high);
+    if (low < high)
     {
         unsigned int pivot = partition(array, low, high);
-       
+
         quickShort(array, low, pivot - 1);
-        
+
         quickShort(array, pivot + 1, high);
     }
     // else
@@ -317,11 +326,10 @@ void quickShort(unsigned int *array, int low, int high)//Replace quicksort
     // }
 }
 
-
-
 void eliminateDoubles(vertex *v)
 {
-    if(v->count == 0){
+    if (v->count == 0)
+    {
         return;
     }
     if (v->next != NULL)
@@ -329,14 +337,14 @@ void eliminateDoubles(vertex *v)
         printf("Convert vertex before eliminating doubles");
         return;
     }
-    
+
     unsigned int current = v->neigbhors[0];
     unsigned int currentWeight = v->neigbhors[1];
     unsigned int counter = 0;
-    
-    for(int i = 1; i < v->count; i++)
+
+    for (int i = 1; i < v->count; i++)
     {
-        if(current != v->neigbhors[2 * i])
+        if (current != v->neigbhors[2 * i])
         {
             v->neigbhors[2 * counter] = current;
             v->neigbhors[2 * counter + 1] = currentWeight;
@@ -346,7 +354,7 @@ void eliminateDoubles(vertex *v)
         }
         else
         {
-            if(currentWeight > v->neigbhors[2 * i + 1])
+            if (currentWeight > v->neigbhors[2 * i + 1])
             {
                 currentWeight = v->neigbhors[2 * i + 1];
             }
@@ -359,12 +367,12 @@ void eliminateDoubles(vertex *v)
     v->count = counter;
 }
 
-void printFromList(unsigned long *offsetList, unsigned int* edgeList, unsigned int id)
+void printFromList(unsigned long *offsetList, unsigned int *edgeList, unsigned int id)
 {
     unsigned long start = offsetList[id];
     unsigned long end = offsetList[id + 1];
     printf("id: %u count:%d list:\n", id, (int)(end - start));
-    for(int i = start; i < end; i++)
+    for (int i = start; i < end; i++)
     {
         printf(GRN "%u " RESET, edgeList[2 * i]);
         printf(RED "%u " RESET, edgeList[2 * i + 1]);
@@ -389,12 +397,13 @@ int main(int argc, char *argv[])
     {
         return -1;
     }
-    if(argc == 5){
+    if (argc == 5)
+    {
         sscanf(argv[4], "%d", &mode);
     }
 
     vertexBuffer *graph = extendBuffer(NULL);
-   
+
     char *buffer = (char *)calloc(256, sizeof(char));
     FILE *fd = fopen(argv[1], "r");
     if (fd == NULL)
@@ -406,27 +415,30 @@ int main(int argc, char *argv[])
     int counter = 0;
     unsigned long maxVertex = 0;
     char last;
-    unsigned int count = 0, size0 = 0;
+
     while (last = fgetc(fd))
     {
         if (last == EOF)
         {
-            if(counter == 0)
+            if (counter == 0)
             {
                 break;
             }
             counter = 0;
             unsigned int v1, v2, w;
             int numberRead = 0;
-            if(mode == 1){
+            if (mode == 1)
+            {
                 char a = ' ';
                 numberRead = sscanf(buffer, "%c %u %u %u", &a, &v1, &v2, &w);
-                if(a != 'a'){
+                if (a != 'a')
+                {
                     numberRead = 0;
-                } 
+                }
             }
-            else{
-                numberRead = sscanf(buffer, "%u %u %u", &v1, &v2, &w); 
+            else
+            {
+                numberRead = sscanf(buffer, "%u %u %u", &v1, &v2, &w);
             }
             if (numberRead == 2)
             {
@@ -444,7 +456,7 @@ int main(int argc, char *argv[])
                 {
                     maxVertex = v2;
                 }
-                printf("%u %u %u\n", v1, v2, w);
+                // printf("%u %u %u\n", v1, v2, w);
             }
             break;
         }
@@ -456,15 +468,18 @@ int main(int argc, char *argv[])
         {
             unsigned int v1, v2, w;
             int numberRead = 0;
-            if(mode == 1){
+            if (mode == 1)
+            {
                 char a = 'b';
                 numberRead = sscanf(buffer, "%c %u %u %u", &a, &v1, &v2, &w);
-                if(a != 'a'){
+                if (a != 'a')
+                {
                     numberRead = 0;
-                } 
+                }
             }
-            else{
-                numberRead = sscanf(buffer, "%u %u %u", &v1, &v2, &w); 
+            else
+            {
+                numberRead = sscanf(buffer, "%u %u %u", &v1, &v2, &w);
             }
 
             if (numberRead == 2)
@@ -473,6 +488,7 @@ int main(int argc, char *argv[])
             }
             if (numberRead == 2 || numberRead == 3 || numberRead == 4)
             {
+                
                 addEdge(v2, getVertex(graph, v1), w);
                 addEdge(v1, getVertex(graph, v2), w);
                 if (maxVertex < v1)
@@ -483,33 +499,22 @@ int main(int argc, char *argv[])
                 {
                     maxVertex = v2;
                 }
-                if(count == 10000){
-                    count = 0;
-                    printf("%u %u %u\n", v1, v2, w);
-                }
-                else{
-                    count++;
-                }
             }
             memset(buffer, 0, counter * sizeof(char));
             counter = 0;
-            if(v1 >= 10000){
-                break;
-            }
-            if(v1 == 0 || v2 == 0){
-                size0++;
-            }
         }
     }
 
     fclose(fd);
     unsigned long edgesCount = 0;
-    
+
     printf("finished reading\n");
+    sleep(1);
     for (unsigned int i = 0; i <= maxVertex; i++)
     {
         vertex *v = getVertex(graph, i);
-        if(i == 0){
+        if (i == 0)
+        {
             printf("%d\n", v->count);
         }
         convertVertex(v);
@@ -560,35 +565,32 @@ int main(int argc, char *argv[])
 
     size_t graphSize = sizeof(unsigned long) * (2 + maxVertex + 2) + sizeof(unsigned int) * (edgesCount * 2);
 
-    printf("%lu %lu %lu\n", graphSize, maxVertex, edgesCount);
-
-    unsigned long* graphMemory = (unsigned long*)(malloc(graphSize));
+    unsigned long *graphMemory = (unsigned long *)(malloc(graphSize));
     graphMemory[0] = maxVertex + 1;
     graphMemory[1] = edgesCount;
     unsigned long *offsetList = &graphMemory[2];
-    unsigned int *edgesList = (unsigned int*)&offsetList[maxVertex + 2];
+    unsigned int *edgesList = (unsigned int *)&offsetList[maxVertex + 2];
 
     unsigned long c = 0;
     for (unsigned int i = 0; i <= maxVertex; i++)
     {
         vertex *v = getVertex(graph, i);
         offsetList[i] = c;
-        if(v->count != 0){
+        if (v->count != 0)
+        {
             memcpy(&edgesList[c * 2], v->neigbhors, 2 * sizeof(unsigned int) * v->count);
             c += v->count;
         }
         deallocateVertex(v);
     }
-    
-    printf("finished loop\n");
 
-    //deallocateVertexBuffer(graph);
+    // deallocateVertexBuffer(graph);
 
     offsetList[maxVertex + 1] = c;
 
     printf("finished creating graph\n");
 
-    if(argc == 3)
+    if (argc == 3)
     {
         while (1)
         {
@@ -600,7 +602,7 @@ int main(int argc, char *argv[])
             {
                 printFromList(offsetList, edgesList, id);
             }
-            
+
             if (op == 'x')
             {
                 break;
@@ -609,13 +611,20 @@ int main(int argc, char *argv[])
     }
     else
     {
-        int fd = open(argv[3], O_CREAT | O_RDWR | O_TRUNC);
+        int fd = open(argv[3], O_CREAT | O_RDWR | O_TRUNC, 0666);
         int ret = ftruncate(fd, graphSize);
-        unsigned long *map = (unsigned long*)mmap(NULL, graphSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-        memcpy(map, graphMemory, graphSize);
-        ret = msync(map,graphSize,MS_SYNC);
-        if(ret != 0)
+        if (ret < 0)
         {
+            perror("ftruncate"); // will print descriptive error
+            printf("Error code: %d (%s)\n", errno, strerror(errno));
+        }
+        unsigned long *map = (unsigned long *)mmap(NULL, graphSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+        memcpy(map, graphMemory, 1);
+        ret = msync(map, graphSize, MS_SYNC);
+        if (ret < 0)
+        {
+            perror("msync");
+            printf("Error code: %d (%s)\n", errno, strerror(errno));
             printf("Mapping failed with %d\n", ret);
         }
         else

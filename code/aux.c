@@ -426,41 +426,41 @@ void flush_os_cache()
 	return;
 }
 
-void* create_shm(char* shm_file_name, unsigned long length)
-{
-	assert(shm_file_name != NULL);
-	assert(length > 0);
+// void* create_shm(char* shm_file_name, unsigned long length)
+// {
+// 	assert(shm_file_name != NULL);
+// 	assert(length > 0);
 
- 	int shm_fd = shm_open(shm_file_name, O_RDWR|O_CREAT, 0644);
- 	if(shm_fd == -1)
-	{
-		printf("create_shm(), error in shm_open() %d, %s .\033[0;37m \n", errno, strerror(errno));
-		assert(shm_fd != -1);
-	}	
+//  	int shm_fd = shm_open(shm_file_name, O_RDWR|O_CREAT, 0644);
+//  	if(shm_fd == -1)
+// 	{
+// 		printf("create_shm(), error in shm_open() %d, %s .\033[0;37m \n", errno, strerror(errno));
+// 		assert(shm_fd != -1);
+// 	}	
 
-	int ret = ftruncate(shm_fd, length);
-	if(ret != 0)
-	{
-		printf("create_shm(), error in ftruncate() %d, %s .\033[0;37m \n", errno, strerror(errno));
-		ret = shm_unlink(shm_file_name);
-		assert(ret == 0);
-		return NULL;
-	}
+// 	int ret = ftruncate(shm_fd, length);
+// 	if(ret != 0)
+// 	{
+// 		printf("create_shm(), error in ftruncate() %d, %s .\033[0;37m \n", errno, strerror(errno));
+// 		ret = shm_unlink(shm_file_name);
+// 		assert(ret == 0);
+// 		return NULL;
+// 	}
 
-	void* mem = mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_SHARED , shm_fd, 0);
-	if(mem == MAP_FAILED)
-	{
-		printf("create_shm(), error in mmap() %d, %s .\033[0;37m \n", errno, strerror(errno));
-		ret = shm_unlink(shm_file_name);
-		assert(ret == 0);
-		return NULL;
-	}
+// 	void* mem = mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_SHARED , shm_fd, 0);
+// 	if(mem == MAP_FAILED)
+// 	{
+// 		printf("create_shm(), error in mmap() %d, %s .\033[0;37m \n", errno, strerror(errno));
+// 		ret = shm_unlink(shm_file_name);
+// 		assert(ret == 0);
+// 		return NULL;
+// 	}
 
-	close(shm_fd);
-	shm_fd = -1;
+// 	close(shm_fd);
+// 	shm_fd = -1;
 
-	return mem;
-}
+// 	return mem;
+// }
 
 char* ul2s(unsigned long in, char* out)
 {
