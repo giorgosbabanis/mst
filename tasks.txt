@@ -8,4 +8,7 @@ Retrieve a file created
 Add reading from my memory mappping implementation to the ready mst program
 
 TODO
-Find out why the getVertex does not work correctly when the buffer has more than one block only when running on the schools pcs
+extend sometimes does not work no idea why
+
+TIP 
+Always use interactive mode for debugging

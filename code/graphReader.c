@@ -31,14 +31,14 @@ int main(int argc, char** argv)
     }
     int fd = open(argv[1], O_RDONLY);
     struct stat st;
-    size_t size = fstat(fd, &st);
+    int res = fstat(fd, &st);
     unsigned long* graph = (unsigned long *)mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 
     unsigned long vertices = graph[0], edges = graph[1];
     unsigned long *offsetList = &graph[2];
     unsigned int *edgesList = (unsigned int*)&graph[2 + graph[0] + 2];
 
-    printf("total vertices %lu, total edges %lu", vertices, edges);
+    printf("total vertices %lu, total edges %lu\n", vertices, edges);
     while (1)
         {
             unsigned int id, scanned;
