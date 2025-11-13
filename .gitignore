@@ -4,3 +4,5 @@ obj
 test*
 *.exe
 maps
+*.out
+*.zip

@@ -10,8 +10,8 @@
 #define GRN "\x1B[32m"
 #define RESET "\x1B[0m"
 
-const int vertexSize = 16;
-const unsigned int vertexBufferSize = 1024;
+const int vertexSize = 128;
+const unsigned int vertexBufferSize = 16384;
 
 typedef struct vertex
 {
@@ -214,7 +214,7 @@ vertexBuffer *extendBuffer(vertexBuffer *buffer)
         res->id = 0;
     }
 
-    printf("extending with id %d\n", res->id);
+    //printf("extending with id %d\n", res->id);
     // printf("allocated block with id %d\n", res->id);
     for (int i = 0; i < vertexBufferSize; i++)
     {
@@ -459,6 +459,7 @@ int main(int argc, char *argv[])
     int counter = 0;
     unsigned long maxVertex = 0;
     char last;
+    unsigned long edgeCounter = 0;
 
     while (last = fgetc(fd))
     {
@@ -548,6 +549,10 @@ int main(int argc, char *argv[])
             }
             memset(buffer, 0, counter * sizeof(char));
             counter = 0;
+            edgeCounter++;
+            if((edgeCounter & 131071) == 0){
+                printf("Read edge %lu\n", edgeCounter);
+            }
         }
         // if(last == EOF){
         //     break;
@@ -570,6 +575,9 @@ int main(int argc, char *argv[])
         bubbleSort(v->neigbhors, 0, v->count);
         eliminateDoubles(v);
         edgesCount += v->count;
+        if((i & 16383) == 0){
+                printf("Sorted vertex %u\n", i);
+            }
     }
 
     printf("finished sorting and eliminating\n");
