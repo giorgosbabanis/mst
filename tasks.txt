@@ -7,8 +7,16 @@ Map the graph from memory to a file
 Retrieve a file created
 Add reading from my memory mappping implementation to the ready mst program
 
-TODO
-extend sometimes does not work no idea why
 
-TIP 
-Always use interactive mode for debugging
+New Task 
+Use lib to convert edge lists to csc
+
+Steps
+Use lib to read matrix market format OK
+Convert matrix market (COO) to csc OK
+Add a new read to matrix_market.c to read from the edge lists of the lab 
+    -Recognize c, p, a lines
+    - c header
+    - p sp number of nodes and edges
+    - a edge line  
+Add a new coo_to_csc to be compatible with the csc format of the mastiff algorithm (very simple)
