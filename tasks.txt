@@ -14,7 +14,7 @@ Use lib to convert edge lists to csc
 Steps
 Use lib to read matrix market format OK
 Convert matrix market (COO) to csc OK
-Add a new read to matrix_market.c to read from the edge lists of the lab 
+Add a new read to matrix_market.c to read from the edge lists of the lab OK
     -Recognize c, p, a lines
     - c header
     - p sp number of nodes and edges

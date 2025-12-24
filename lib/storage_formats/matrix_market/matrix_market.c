@@ -322,7 +322,81 @@ mtx_read(char * filename, long expand_symmetry, long pattern_dummy_vals)
 	return MTX;
 }
 
+struct Matrix_Market *
+mtx_read_graph(struct File_Atoms * A){
+	struct Matrix_Market * graph = mtx_new();
+	long index = 0;
+	graph->m = 0;
+	graph->nnz = 0;
 
+	for(;index < A->num_atoms; index++){
+		char * line = A->atoms[index];
+
+		int m,nnz;
+		if(A->atom_len[index] >= 4 && strncmp(line, "p sp", 4) == 0){
+			
+			int res = sscanf(line,"p sp %d %d", &m, &nnz);
+			if(res == 2){
+				graph->m = m + 1;
+				graph->n = m + 1;
+				graph->nnz = nnz;
+				break;
+			}
+			else{
+				printf("Error reading the line with the number of vertices and edges on the following line\n");
+				printf("%s\n", line);
+			    exit(1);
+			}
+		}
+	}
+
+	index++;
+
+	if(graph->m <= 0){
+		printf("Error, did not read the number of vertices\n");
+		exit(1);
+	}
+
+	if(graph->nnz <= 0){
+		printf("Error, did not read number of edges\n");
+		exit(1);
+	}
+
+	graph->R = malloc(graph->nnz * sizeof(graph->R));
+	graph->C = malloc(graph->nnz * sizeof(graph->C));
+	graph->V = malloc(graph->nnz * sizeof(int));
+	
+	#pragma omp parallel
+	{
+		int threads = omp_get_num_threads();
+		int id = omp_get_thread_num();
+
+		long start = graph->nnz * id / threads ; 
+		long end = graph->nnz * (id + 1) / threads;
+
+		// usleep(id * 1000);
+		// printf("I got id %d, start %ld and end %ld\n", id, start, end);
+		int *V = graph->V;
+
+		for(long i = start; i < end; i++){
+			char * line = A->atoms[index + i];
+			int a, b, w; 
+
+			int res = sscanf(line, "a %d %d %d", &a, &b, &w);
+			if(res == 3){
+
+				graph->R[i] = a;
+				graph->C[i] = b;
+				V[i] = w;
+			}
+			else{
+				printf("Problem reading on line: %s\n", line);
+			}
+		}
+	}
+	
+	return graph;
+}
 //==========================================================================================================================================
 //------------------------------------------------------------------------------------------------------------------------------------------
 //-                                                             Write File                                                                 -

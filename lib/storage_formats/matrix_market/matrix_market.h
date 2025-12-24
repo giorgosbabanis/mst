@@ -70,6 +70,7 @@ void mtx_destroy(struct Matrix_Market ** obj_ptr);
 double (* mtx_functor_get_value_as_double(struct Matrix_Market * MTX)) (void *, long);
 
 struct Matrix_Market * mtx_read(char * filename, long expand_symmetry, long pattern_dummy_vals);
+struct Matrix_Market * mtx_read_graph(struct File_Atoms * A);
 void mtx_write(struct Matrix_Market * MTX, char * filename);
 
 void mtx_values_convert_to_real(struct Matrix_Market * MTX);
