@@ -3,6 +3,10 @@
         "time.h": "c",
         "assert.h": "c",
         "limits.h": "c",
-        "cerrno": "c"
+        "cerrno": "c",
+        "cpp_defines.h": "c",
+        "plot.h": "c",
+        "debug.h": "c",
+        "csr_gen_undef.h": "c"
     }
 }
